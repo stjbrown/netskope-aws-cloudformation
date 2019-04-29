@@ -1,14 +1,7 @@
-# Netskope AWS CloudFormation Template - Security Assesment
+# Netskope AWS Cloudformation Template
 
-This CloudFormation Template will build a stack that enables all the requirements for the Netskope Security Assessment Feature.
+Netskope API Protection, previously called Introspection, is a cloud to cloud connection that provides near real-time data and threat protection for both IaaS and SaaS providers.  Before Netskope can connect to any AWS accounts, there is some prep work involved on the AWS side.  This Cloudformation Template will automatically configure an AWS account with the necessary requirements.  The template will configure features such as an S3 Bucket, SNS Topic, Cloudtrail Trail, and an IAM Role.
 
+* If deploying only Netskope Continoius Security Assessment and Inventory(CSA), choose the "Security Assessment" Template.
+* If deploying any additional features along with CSA, choose the "Security All Features" Template.
 
-#### Before running the template you will need to collect information from the Netskope Tenant. In the tenant, start the configuration of an AWS instance to find out the External ID that is unique to your tenant.
-
-###### Parameters required to run the template
-* Netskope External ID 
-
-
-
-<a href="https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Netskope-AWS-CF&templateURL=https://s3.amazonaws.com/netskope-aws/netskope-aws-csa-inventory.yaml">  
-   <img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png"/></a>
