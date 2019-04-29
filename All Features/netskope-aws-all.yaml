@@ -1,0 +1,161 @@
+---
+Parameters:
+  TrailName:
+    Type: String
+    Default: Netskope-CloudTrail
+    Description: Enter a Name for the Cloudtrail Trail
+  SNSTopicName:
+    Type: String
+    Default: Netskope-SNS-Topic
+    Description: Enter a Name for the SNS Topic. 
+  S3BucketName:
+    Type: String
+    Description: Enter a Globaly Unique Bucket Name.  This is used by CloudTrail.
+  NSAccountID:
+    Type: String
+    Default: 657484567583
+  NSExternalID:
+    Type: String
+    Description: Enter the AWS External ID found inside the Netskope Tenant. 
+  NSRoleName:
+    Type: String
+    Default: Netskope-IAM-Role
+    Description: Provide a Name for the IAM Role
+
+Resources:
+#AWS S3 Bucket 
+  NetskopeS3Setup:
+    Type: 'AWS::S3::Bucket'
+    Properties: 
+      BucketName:
+        Ref: S3BucketName
+  NetskopeS3Policy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket:
+        Ref: NetskopeS3Setup
+      PolicyDocument:
+        Statement:
+          - Sid: AWSCloudTrailAclCheck
+            Action:
+              - 's3:GetBucketAcl'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:s3:::${NetskopeS3Setup}'
+            Principal:
+              Service: cloudtrail.amazonaws.com
+          - Sid: AWSCloudTrailWrite
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:s3:::${NetskopeS3Setup}/AWSLogs/${AWS::AccountId}/*'
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Condition:
+              StringEquals:
+                's3:x-amz-acl': bucket-owner-full-control
+#AWS SNS  
+  NetskopeSNSSetup:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      TopicName: 
+        Ref: SNSTopicName
+  NetskopeSNSPolicy:
+    Type: 'AWS::SNS::TopicPolicy'
+    Properties:
+      Topics:
+        - Ref: NetskopeSNSSetup
+      PolicyDocument:
+        Statement:
+          - Sid: AWSCloudTrailSNSPolicy
+            Action:
+              - 'sns:Publish'
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Resource: !Sub '${NetskopeSNSSetup}'
+#AWS CLoudTrail  
+  NetskopeCTSetup:
+    DependsOn:
+      - NetskopeS3Setup
+      - NetskopeS3Policy
+      - NetskopeSNSSetup
+      - NetskopeSNSPolicy
+    Type: 'AWS::CloudTrail::Trail'
+    Properties:
+      S3BucketName:
+        Ref: NetskopeS3Setup
+      SnsTopicName:
+        'Fn::GetAtt':
+          - NetskopeSNSSetup
+          - TopicName
+      IsLogging: true
+      EnableLogFileValidation: true
+      IsMultiRegionTrail: true
+      IncludeGlobalServiceEvents: true
+      EventSelectors:
+        - IncludeManagementEvents: true
+          DataResources:
+            - Values:
+              - 'arn:aws:s3:::'
+              Type: 'AWS::S3::Object'
+          ReadWriteType: All
+      TrailName: 
+        Ref: TrailName
+#AWS IAM
+  NetskopeIAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                Ref: NSAccountID
+            Action:
+              - 'sts:AssumeRole'
+            Condition:
+              StringEquals: 
+                'sts:ExternalId': 
+                  Ref: NSExternalID
+      Path: /
+      Policies:
+        - PolicyName: NetskopeInlinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'cloudtrail:DescribeTrails'
+                  - 'cloudtrail:LookupEvents'
+                  - 's3:GetObject'
+                  - 's3:GetObjectAcl'
+                  - 's3:ListBucket'
+                  - 's3:ListAllMyBuckets'
+                  - 's3:GetBucketLocation'
+                  - 'dynamodb:*'
+                  - 'lambda:Get*'
+                  - 'lambda:List'
+                  - 'sns:ConfirmSubscription'
+                  - 'sns:Subscribe'
+                  - 'sns:Unsubscribe'
+                  - 'sqs:GetQueueAttributes'
+                  - 'sqs:GetQueueUrl'
+                  - 'sqs:ListDeadLetterSourceQueues'
+                  - 'sqs:ListQueues'
+                Resource: '*'
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/SecurityAudit"
+      RoleName: 
+        Ref: NSRoleName
+
+Outputs:
+  NetskopeCTARN:
+    Value: !GetAtt NetskopeCTSetup.Arn
+    Description: Netskope CloudTrail Region (look inside ARN)
+  NetskopeCTName:
+    Value: !Ref 'NetskopeCTSetup'
+    Description: Netskope CloudTrail Name
+  NetskopeIAM:
+    Description: Netskope IAM Role
+    Value: !GetAtt NetskopeIAMRole.Arn

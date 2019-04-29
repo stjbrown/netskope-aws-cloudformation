@@ -1,0 +1,62 @@
+---
+Parameters:
+  NSAccountID:
+    Type: String
+    Default: 657484567583
+    Description: Enter the Netskope Account ID found in the Neskope Tenant.
+  NSExternalID:
+    Type: String
+    Description: Enter the AWS External ID found inside the Netskope Tenant. 
+  NSRoleName:
+    Type: String
+    Default: Netskope-IAM-Role
+    Description: Provide a Name for the IAM Role
+
+Resources:
+#AWS IAM
+  NetskopeIAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                Ref: NSAccountID
+            Action:
+              - 'sts:AssumeRole'
+            Condition:
+              StringEquals: 
+                'sts:ExternalId': 
+                  Ref: NSExternalID
+      Path: /
+      Policies:
+        - PolicyName: NetskopeInlinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:ListBucket'
+                  - 's3:ListAllMyBuckets'
+                  - 's3:GetBucketLocation'
+                  - 'dynamodb:*'
+                  - 'lambda:Get*'
+                  - 'lambda:List'
+                  - 'sqs:GetQueueAttributes'
+                  - 'sqs:GetQueueUrl'
+                  - 'sqs:ListDeadLetterSourceQueues'
+                  - 'sqs:ListQueues'
+                Resource: '*'
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/SecurityAudit"
+      RoleName: 
+        Ref: NSRoleName
+
+Outputs:
+  NetskopeIAM:
+    Description: Netskope IAM Role
+    Value: !GetAtt NetskopeIAMRole.Arn
+
+
