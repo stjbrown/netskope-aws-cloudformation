@@ -39,11 +39,15 @@ Resources:
               - Effect: Allow
                 Action:
                   - 's3:ListBucket'
+                  - 's3:GetObject'
+                  - 's3:GetObjectAcl'
                   - 's3:ListAllMyBuckets'
+                  - 's3:GetBucketAcl'
                   - 's3:GetBucketLocation'
-                  - 'dynamodb:*'
+                  - 'dynamodb:ListTagsOfResource'
                   - 'lambda:Get*'
-                  - 'lambda:List'
+                  - 'lambda:List*'
+                  - 'ses:ListIdentityPolicies'
                   - 'sqs:GetQueueAttributes'
                   - 'sqs:GetQueueUrl'
                   - 'sqs:ListDeadLetterSourceQueues'
