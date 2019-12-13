@@ -13,7 +13,6 @@ Parameters:
     Description: Enter a Globaly Unique Bucket Name.  This is used by CloudTrail.
   NSAccountID:
     Type: String
-    Default: 657484567583
   NSExternalID:
     Type: String
     Description: Enter the AWS External ID found inside the Netskope Tenant. 
