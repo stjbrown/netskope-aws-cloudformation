@@ -2,7 +2,6 @@
 Parameters:
   NSAccountID:
     Type: String
-    Default: 657484567583
     Description: Enter the Netskope Account ID found in the Neskope Tenant.
   NSExternalID:
     Type: String
