@@ -38,7 +38,6 @@ Resources:
               - Effect: Allow
                 Action:
                   - 's3:ListBucket'
-                  - 's3:GetObject'
                   - 's3:GetObjectAcl'
                   - 's3:ListAllMyBuckets'
                   - 's3:GetBucketAcl'
